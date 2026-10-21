@@ -1154,6 +1154,25 @@ requestAnimationFrame(loop);
     sendAccumulator: 0, lastError: ""
   };
 
+  // ---- автоскрытие окна лобби (URL + код комнаты) ----
+  let onlineScreenTimer = null;
+  function scheduleOnlineScreenHide(delayMs) {
+    if (onlineScreenTimer) {
+      clearTimeout(onlineScreenTimer);
+      onlineScreenTimer = null;
+    }
+    onlineScreenTimer = setTimeout(() => {
+      onlineScreen.classList.add("hidden");
+      onlineScreenTimer = null;
+    }, delayMs);
+  }
+  function cancelOnlineScreenHide() {
+    if (onlineScreenTimer) {
+      clearTimeout(onlineScreenTimer);
+      onlineScreenTimer = null;
+    }
+  }
+
   // URL можно заранее задать до загрузки игры:
   // window.MK_SERVER_URL = "https://your-service.onrender.com";
   if (window.MK_SERVER_URL) serverInput.value = window.MK_SERVER_URL;
@@ -1165,11 +1184,13 @@ requestAnimationFrame(loop);
   };
 
   document.getElementById("btn-online").onclick = () => {
+    cancelOnlineScreenHide();
     oldShowScreen(null);
     onlineScreen.classList.remove("hidden");
     onlineStatus.textContent = "Укажи URL сервера и выбери действие.";
   };
   document.getElementById("online-back").onclick = () => {
+    cancelOnlineScreenHide();
     onlineScreen.classList.add("hidden");
     oldShowScreen("menu");
   };
@@ -1203,7 +1224,11 @@ requestAnimationFrame(loop);
       });
       s.on("room:peer-joined", () => {
         status("Игрок подключился. Выбери своего бойца.");
-        if (net.role === "host") buildGrids();
+        if (net.role === "host") {
+          buildGrids();
+          // Хост: закрываем окно лобби, чтобы перейти к выбору бойца
+          scheduleOnlineScreenHide(2000);
+        }
       });
       // Гость запрашивает текущий выбор хоста, в том числе если хост выбрал бойца заранее.
       s.on("player:request-character", () => {
@@ -1240,6 +1265,7 @@ requestAnimationFrame(loop);
         if (net.started) return;
         if (!sel.p1 || !sel.p2) { status("Не получен выбор обоих бойцов. Подключитесь заново."); return; }
         net.started = true;
+        cancelOnlineScreenHide();
         onlineScreen.classList.add("hidden");
         startMatch();
         status("Бой начался!");
@@ -1267,6 +1293,10 @@ requestAnimationFrame(loop);
     document.getElementById("btn-start").textContent = role === "host" ? "НАЧАТЬ БОЙ" : "ОЖИДАНИЕ ХОСТА";
     if (role === "guest" && net.socket && net.socket.connected) {
       net.socket.emit("player:request-character");
+    }
+    // Гость: код уже не нужен — закрываем окно лобби через 1.5 сек
+    if (role === "guest") {
+      scheduleOnlineScreenHide(1500);
     }
   }
 
@@ -1336,6 +1366,7 @@ requestAnimationFrame(loop);
   // Возвращаем локальный режим при выходе в меню.
   const originalBackToMenu = backToMenu;
   backToMenu = function() {
+    cancelOnlineScreenHide();
     if (net.socket && net.socket.connected && net.room) net.socket.emit("room:leave");
     net.role = null; net.room = null; net.started = false;
     net.remote = {left:false,right:false,up:false,down:false,punch:false,kick:false};
