@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MORTAL KOMBAT — EPSTEIN vs P. DIDDY</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(circle at 50% 0%,#1a0a0a,#050508 70%);
+    font-family:'Impact','Arial Black',sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;color:#fff;user-select:none;
+  }
+  #app{
+    position:relative;width:1000px;height:560px;flex:none;
+    border:3px solid #34202a;border-radius:8px;overflow:hidden;
+    box-shadow:0 0 90px rgba(255,70,0,.28),0 0 200px rgba(120,0,0,.2);
+    background:#000;transform-origin:center center;
+  }
+  canvas{display:block;width:100%;height:100%}
+
+  .screen{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;
+    background:rgba(6,4,10,.88);backdrop-filter:blur(3px);
+    padding:18px;z-index:5;
+  }
+  .screen.hidden{display:none}
+
+  h1{
+    font-size:64px;letter-spacing:6px;line-height:.95;text-align:center;
+    background:linear-gradient(180deg,#ffe066,#ff6a00 55%,#a01000);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 0 #000) drop-shadow(0 0 22px rgba(255,90,0,.6));
+  }
+  h2.sub{font-size:22px;letter-spacing:4px;color:#ffb347;text-shadow:0 0 14px rgba(255,120,0,.7)}
+  h2{font-size:34px;letter-spacing:4px;color:#ffcc33;text-shadow:0 3px 0 #000}
+
+  button{
+    font-family:inherit;font-size:20px;letter-spacing:2px;
+    padding:12px 34px;color:#fff;cursor:pointer;
+    background:linear-gradient(180deg,#8c1c0a,#4a0c04);
+    border:2px solid #ff7a2a;border-radius:5px;
+    text-shadow:0 2px 0 #000;transition:.13s;
+    box-shadow:0 4px 0 #200402,0 0 22px rgba(255,90,0,.35);
+  }
+  button:hover:not(:disabled){transform:translateY(-2px);background:linear-gradient(180deg,#c22a10,#671204);box-shadow:0 6px 0 #200402,0 0 34px rgba(255,120,0,.6)}
+  button:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #200402}
+  button:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(1)}
+
+  .hint{font-size:13px;color:#8a8a9a;letter-spacing:1px;text-align:center;line-height:1.7;font-family:monospace}
+
+  /* ---------- выбор персонажа ---------- */
+  .select-wrap{display:flex;align-items:flex-start;gap:22px;width:100%;justify-content:center}
+  .side{display:flex;flex-direction:column;gap:8px;align-items:center;flex:1;max-width:360px}
+  .side-label{font-size:18px;letter-spacing:3px;padding:4px 18px;border-radius:4px}
+  .p1c{background:#12306b;color:#7fb2ff;border:1px solid #2a5fbf}
+  .p2c{background:#5c1010;color:#ff8a7a;border:1px solid #a02020}
+  .grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    background:rgba(0,0,0,.45);padding:10px;border-radius:8px;
+    border:1px solid #2a2a3a;min-height:150px;width:100%;
+  }
+  .card{
+    position:relative;display:flex;flex-direction:column;align-items:center;
+    background:#14141f;border:2px solid #3a3a52;border-radius:6px;
+    padding:4px 2px 2px;cursor:pointer;transition:.12s;
+  }
+  .card:hover{border-color:#ff7a2a;transform:translateY(-3px);background:#1e1e2e}
+  .card.selected{border-color:#ffcc00;background:#2a2410;box-shadow:0 0 16px #ffcc00}
+  .card canvas{width:100%;height:auto;display:block}
+  .card-name{font-size:10px;letter-spacing:.5px;color:#cfcfe0;text-align:center;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+  .picked{font-size:15px;color:#ffcc33;letter-spacing:2px;min-height:20px}
+  .vs{font-size:40px;color:#ff3b2f;text-shadow:0 0 24px #ff3b2f;align-self:center;padding-top:60px}
+  .select-footer{display:flex;gap:14px;margin-top:6px}
+
+  /* ---------- создание персонажа ---------- */
+  .create-body{display:flex;gap:30px;align-items:center}
+  #preview{background:radial-gradient(circle at 50% 80%,#241a2e,#0b0810);border:2px solid #3a3a52;border-radius:8px}
+  .fields{display:flex;flex-direction:column;gap:12px}
+  .fields label{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:15px;letter-spacing:2px;color:#cfcfe0}
+  .fields input[type=text]{
+    font-family:monospace;font-size:16px;padding:7px 10px;width:200px;
+    background:#14141f;border:2px solid #3a3a52;border-radius:5px;color:#fff;outline:none;
+  }
+  .fields input[type=text]:focus{border-color:#ff7a2a}
+  .fields input[type=color]{
+    width:70px;height:34px;background:#14141f;border:2px solid #3a3a52;
+    border-radius:5px;cursor:pointer;padding:2px;
+  }
+  .row{display:flex;gap:14px}
+  .win-name{font-size:52px;letter-spacing:4px;color:#ffcc33;text-shadow:0 0 30px #ff6a00,0 4px 0 #000}
+</style>
+
+<style>
+#btn-online{margin-top:0}
+#screen-online .online-panel{width:min(620px,96%);display:flex;flex-direction:column;align-items:center;gap:14px}
+#screen-online .online-row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;width:100%}
+#screen-online input{font-family:monospace;font-size:18px;padding:10px 12px;width:min(360px,100%);background:#14141f;border:2px solid #3a3a52;border-radius:5px;color:#fff;outline:none}
+#screen-online input:focus{border-color:#ff7a2a}
+#online-status{min-height:24px;color:#ffcc33;text-align:center;font:14px monospace;white-space:pre-wrap}
+#online-code{font-size:32px;letter-spacing:6px;color:#ffcc33;text-shadow:0 0 18px #ff6a00;min-height:38px}
+#online-copy{font-size:14px;padding:8px 14px}
+#screen-online .hint{max-width:540px}
+@media(max-width:600px){#screen-online h2{font-size:26px}#screen-online button{font-size:15px;padding:10px 14px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv" width="1000" height="560"></canvas>
+
+  <!-- МЕНЮ -->
+  <div id="screen-menu" class="screen">
+    <h2 class="sub">MORTAL KOMBAT</h2>
+    <h1>EPSTEIN<br>vs<br>P.&nbsp;DIDDY</h1>
+    <button id="btn-play">ИГРАТЬ</button>
+    <button id="btn-online">СЕТЕВАЯ ИГРА</button>
+    <div class="hint">
+      ИГРОК 1: A / D — ходьба, W — прыжок, S — блок, F — удар, G — пинок<br>
+      ИГРОК 2: ← / → — ходьба, ↑ — прыжок, ↓ — блок, K — удар, L — пинок
+    </div>
+  </div>
+
+  <!-- ВЫБОР ПЕРСОНАЖА -->
+  <div id="screen-select" class="screen hidden">
+    <h2>ВЫБЕРИ БОЙЦА</h2>
+    <div class="select-wrap">
+      <div class="side">
+        <div class="side-label p1c">ИГРОК 1</div>
+        <div class="grid" id="grid1"></div>
+        <div class="picked" id="picked1">—</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="side">
+        <div class="side-label p2c">ИГРОК 2</div>
+        <div class="grid" id="grid2"></div>
+        <div class="picked" id="picked2">—</div>
+      </div>
+    </div>
+    <div class="select-footer">
+      <button id="btn-create">+ БОЕЦ</button>
+      <button id="btn-start" disabled>В БОЙ!</button>
+      <button id="btn-back">НАЗАД</button>
+    </div>
+  </div>
+
+  <!-- СОЗДАНИЕ ПЕРСОНАЖА -->
+  <div id="screen-create" class="screen hidden">
+    <h2>СОЗДАТЬ БОЙЦА</h2>
+    <div class="create-body">
+      <canvas id="preview" width="180" height="240"></canvas>
+      <div class="fields">
+        <label>ИМЯ <input id="inp-name" type="text" maxlength="14" value="НОВЫЙ БОЕЦ"></label>
+        <label>ТЕЛО <input id="inp-color" type="color" value="#8a1f1f"></label>
+        <label>АКЦЕНТ <input id="inp-accent" type="color" value="#ffcc00"></label>
+        <label>КОЖА <input id="inp-skin" type="color" value="#e8b98a"></label>
+      </div>
+    </div>
+    <div class="row">
+      <button id="btn-add">ДОБАВИТЬ</button>
+      <button id="btn-cancel">ОТМЕНА</button>
+    </div>
+  </div>
+
+
+<div id="screen-online" class="screen hidden">
+  <h2>СЕТЕВАЯ ИГРА</h2>
+  <div class="online-panel">
+    <div class="hint">Укажи адрес сервера мультиплеера. После подключения создай комнату или введи код друга.</div>
+    <input id="online-server" type="url" placeholder="https://твой-сервер.onrender.com" autocomplete="url">
+    <div class="online-row">
+      <button id="online-create">СОЗДАТЬ КОМНАТУ</button>
+    </div>
+    <div id="online-code"></div>
+    <div class="online-row">
+      <input id="online-room-code" type="text" maxlength="6" placeholder="КОД КОМНАТЫ" autocomplete="off" style="text-transform:uppercase;width:220px">
+      <button id="online-join">ВОЙТИ ПО КОДУ</button>
+    </div>
+    <div id="online-status">Сначала укажи URL сервера.</div>
+    <button id="online-back">НАЗАД</button>
+    <div class="hint">В онлайн-режиме хост играет за левого бойца (A/D/W/S/F/G), гость — за правого (стрелки, K/L). Хост запускает бой после выбора обоих бойцов.</div>
+  </div>
+</div>
+
+  <!-- РЕЗУЛЬТАТ -->
+  <div id="screen-result" class="screen hidden">
+    <h2>ПОБЕДА</h2>
+    <div class="win-name" id="win-name">—</div>
+    <div class="row" style="margin-top:18px">
+      <button id="btn-rematch">РЕВАНШ</button>
+      <button id="btn-tomenu">В МЕНЮ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   УТИЛИТЫ
+================================================================ */
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+function shade(hex,f){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=clamp(Math.round(r*f),0,255);g=clamp(Math.round(g*f),0,255);b=clamp(Math.round(b*f),0,255);
+  return `rgb(${r},${g},${b})`;
+}
+
+/* ---- звук ---- */
+let actx=null;
+function initAudio(){
+  if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(actx&&actx.state==='suspended') actx.resume();
+}
+function beep(freq,dur,type='square',vol=.07,slide=0){
+  if(!actx) return;
+  const o=actx.createOscillator(),g=actx.createGain();
+  o.type=type;
+  o.frequency.setValueAtTime(freq,actx.currentTime);
+  if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),actx.currentTime+dur);
+  g.gain.setValueAtTime(vol,actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+dur);
+  o.connect(g);g.connect(actx.destination);
+  o.start();o.stop(actx.currentTime+dur);
+}
+
+/* ================================================================
+   РИСОВАНИЕ ПЕРСОНАЖА (единый движок для арены и превью)
+================================================================ */
+function limb(g,a,b,bend,w,color){
+  const dx=b[0]-a[0],dy=b[1]-a[1];
+  const len=Math.hypot(dx,dy)||1;
+  const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;
+  const nx=-dy/len,ny=dx/len;
+  g.strokeStyle=color;g.lineWidth=w;g.lineCap='round';g.lineJoin='round';
+  g.beginPath();
+  g.moveTo(a[0],a[1]);
+  g.lineTo(mx+nx*bend,my+ny*bend);
+  g.lineTo(b[0],b[1]);
+  g.stroke();
+}
+
+function drawCharacter(g,x,y,h,facing,char,opts={}){
+  const pose=opts.pose||'idle';
+  const phase=opts.phase||0;
+  const ext=opts.ext||0;
+  const flash=opts.flash>0;
+  const dir=facing;
+
+  const lw=h*0.085;
+  const hipY = y-h*0.46;
+  const shldY= y-h*0.72;
+  const headR= h*0.115;
+  const headCY=y-h+headR+h*0.015;
+
+  const C=flash?'#ffffff':char.color;
+  const A=flash?'#ffffff':char.accent;
+  const S=flash?'#ffffff':(char.skin||'#e8b98a');
+
+  let hipX=x, hipYd=hipY, shldX=x, shldYd=shldY;
+  let fFoot=[x+dir*h*0.13,y], bFoot=[x-dir*h*0.13,y];
+  let fHand=[x+dir*h*0.14,shldY+h*0.22], bHand=[x-dir*h*0.10,shldY+h*0.24];
+  let fBend=-dir*h*0.03, bBend=-dir*h*0.02;
+
+  if(pose==='idle'){
+    const b=Math.sin(phase)*h*0.008;
+    shldYd+=b; hipYd+=b; headCY0=b;
+    fHand[1]+=b; bHand[1]+=b;
+    fBend=-dir*h*0.05; bBend=-dir*h*0.05;
+  }
+  else if(pose==='walk'){
+    const s=Math.sin(phase);
+    fFoot=[x+dir*(h*0.05+s*h*0.17), y-Math.max(0,s)*h*0.07];
+    bFoot=[x+dir*(h*0.05-s*h*0.17), y-Math.max(0,-s)*h*0.07];
+    fHand=[x+dir*(h*0.10-s*h*0.11), shldY+h*0.20];
+    bHand=[x+dir*(-h*0.06+s*h*0.11), shldY+h*0.24];
+    hipX+=Math.sin(phase)*h*0.012;
+    fBend=-dir*h*0.06; bBend=-dir*h*0.06;
+  }
+  else if(pose==='jump'){
+    fFoot=[x+dir*h*0.17,y-h*0.16];
+    bFoot=[x-dir*h*0.03,y-h*0.03];
+    fHand=[x+dir*h*0.19,shldY-h*0.06];
+    bHand=[x-dir*h*0.15,shldY+h*0.04];
+    fBend=-dir*h*0.09; bBend=-dir*h*0.05;
+  }
+  else if(pose==='punch'){
+    fHand=[x+dir*(h*0.20+h*0.30*ext), shldY+h*0.05-h*0.03*ext];
+    bHand=[x-dir*h*0.13, shldY+h*0.15];
+    shldX=x+dir*h*0.05*ext;
+    hipX =x+dir*h*0.03*ext;
+    fFoot=[x+dir*h*0.17,y];
+    bFoot=[x-dir*h*0.16,y];
+    fBend=-dir*h*0.02; bBend=-dir*h*0.06;
+  }
+  else if(pose==='kick'){
+    fFoot=[x+dir*(h*0.16+h*0.36*ext), hipYd-h*0.02+h*0.02*ext];
+    bFoot=[x-dir*h*0.13,y];
+    fHand=[x-dir*h*0.11,shldY+h*0.10];
+    bHand=[x+dir*h*0.17,shldY+h*0.05];
+    shldX=x-dir*h*0.04*ext;
+    fBend=-dir*h*0.03; bBend=-dir*h*0.05;
+  }
+  else if(pose==='block'){
+    fHand=[x+dir*h*0.11,shldY-h*0.05];
+    bHand=[x+dir*h*0.07,shldY+h*0.11];
+    fFoot=[x+dir*h*0.09,y];
+    bFoot=[x-dir*h*0.15,y];
+    hipYd+=h*0.035; shldYd+=h*0.025;
+    fBend=dir*h*0.07; bBend=dir*h*0.06;
+  }
+  else if(pose==='hit'){
+    shldX=x-dir*h*0.09;
+    hipX=x-dir*h*0.035;
+    fHand=[x-dir*h*0.03,shldY-h*0.02];
+    bHand=[x-dir*h*0.21,shldY+h*0.08];
+    fBend=dir*h*0.04; bBend=dir*h*0.04;
+  }
+
+  g.save();
+
+  if(pose==='ko'){
+    g.translate(x,y); g.rotate(-dir*1.45); g.translate(-x,-y);
+  }
+
+  // тень
+  g.save();
+  g.globalAlpha=.28; g.fillStyle='#000';
+  g.beginPath(); g.ellipse(x,y+4,h*0.24,h*0.055,0,0,Math.PI*2); g.fill();
+  g.restore();
+
+  // задняя нога
+  limb(g,[hipX,hipYd],bFoot,-bBend,lw*0.92,shade(S,0.72));
+  // задняя рука
+  limb(g,[shldX,shldYd],bHand,-bBend*1.6,lw*0.82,shade(S,0.78));
+  // торс
+  g.strokeStyle=C; g.lineWidth=lw*1.85; g.lineCap='round';
+  g.beginPath(); g.moveTo(shldX,shldYd); g.lineTo(hipX,hipYd); g.stroke();
+  // акцентная полоса (пояс)
+  g.strokeStyle=A; g.lineWidth=lw*0.6;
+  g.beginPath();
+  g.moveTo(hipX-h*0.09,hipYd-h*0.02);
+  g.lineTo(hipX+h*0.09,hipYd-h*0.02);
+  g.stroke();
+  // передняя нога
+  limb(g,[hipX,hipYd],fFoot,-fBend,lw,S);
+  // голова
+  const hx=shldX+(shldX-hipX)*0.35;
+  g.fillStyle=S;
+  g.beginPath(); g.arc(hx,headCY,headR,0,Math.PI*2); g.fill();
+  // "причёска"/акцент
+  g.fillStyle=A;
+  g.beginPath(); g.arc(hx,headCY-headR*0.35,headR*0.85,Math.PI*1.08,Math.PI*1.92); g.fill();
+  // глаза
+  g.fillStyle='#111';
+  g.beginPath(); g.arc(hx+dir*headR*0.3,headCY+headR*0.1,headR*0.16,0,Math.PI*2); g.fill();
+  // передняя рука
+  limb(g,[shldX,shldYd],fHand,-fBend*1.6,lw,S);
+
+  g.restore();
+}
+
+/* ================================================================
+   РОСТЕР
+================================================================ */
+const ROSTER=[
+  {
+    id:'epstein', name:'ЭПШТЕЙН', tag:'ОСТРОВНОЙ БОСС',
+    color:'#2e4a8f', accent:'#e8d9b0', skin:'#f0c9a0',
+    speed:1.0, power:1.08
+  },
+  {
+    id:'diddy', name:'ПИ. ДИДДИ', tag:'ХИП-ХОП МАГНАТ',
+    color:'#1b1b1b', accent:'#d4af37', skin:'#8a5a3b',
+    speed:1.16, power:0.94
+  }
+];
+let customCount=0;
+
+/* ================================================================
+   ХОЛСТ / КОНСТАНТЫ
+================================================================ */
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+const W=cv.width, H=cv.height;
+const GROUND=470;
+
+const SPEED=300;
+const GRAVITY=2400;
+const JUMP_V=-900;
+
+const ATTACKS={
+  punch:{startup:.07, active:.09, recovery:.17, damage:7,  range:80,  knockback:190, hitstun:.26, pose:'punch'},
+  kick :{startup:.14, active:.12, recovery:.33, damage:14, range:112, knockback:430, hitstun:.45, pose:'kick'}
+};
+
+const CTRL1={left:'KeyA',right:'KeyD',up:'KeyW',down:'KeyS',punch:'KeyF',kick:'KeyG'};
+const CTRL2={left:'ArrowLeft',right:'ArrowRight',up:'ArrowUp',down:'ArrowDown',punch:'KeyK',kick:'KeyL'};
+
+/* ================================================================
+   ВВОД
+================================================================ */
+const keys={}, pressed={};
+window.addEventListener('keydown',e=>{
+  initAudio();
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if(!e.repeat) pressed[e.code]=true;
+  keys[e.code]=true;
+  if(e.code==='Escape') backToMenu();
+});
+window.addEventListener('keyup',e=>{ keys[e.code]=false; });
+window.addEventListener('mousedown',initAudio);
+
+function readInput(c){
+  return {
+    left:!!keys[c.left], right:!!keys[c.right],
+    up:!!keys[c.up], down:!!keys[c.down],
+    punch:!!pressed[c.punch], kick:!!pressed[c.kick]
+  };
+}
+const NOINPUT={left:0,right:0,up:0,down:0,punch:0,kick:0};
+
+/* ================================================================
+   БОЕЦ
+================================================================ */
+class Fighter{
+  constructor(char,x,facing){
+    this.char=char;
+    this.maxHp=100;
+    this.wins=0;
+    this.reset(x,facing);
+  }
+  reset(x,facing){
+    this.x=x; this.y=GROUND;
+    this.vx=0; this.vy=0;
+    this.facing=facing;
+    this.h=150;
+    this.hp=this.maxHp;
+    this.hpGhost=this.maxHp;
+    this.onGround=true;
+    this.attack=null;
+    this.hitstun=0;
+    this.blocking=false;
+    this.ko=false;
+    this.flash=0;
+    this.walkPhase=0;
+  }
+}
+
+/* ================================================================
+   ИГРОВОЕ СОСТОЯНИЕ
+================================================================ */
+const game={
+  state:'menu',          // menu | fight | roundEnd | matchEnd
+  p1:null, p2:null,
+  timer:99,
+  round:1,
+  freeze:0,
+  message:'',
+  messageSub:'',
+  messageTime:0,
+  shake:0,
+  endTimer:0
+};
+let p1=null,p2=null;
+const particles=[];
+
+const sel={p1:null,p2:null};
+
+/* ================================================================
+   ЭКРАНЫ
+================================================================ */
+const screens={
+  menu:document.getElementById('screen-menu'),
+  select:document.getElementById('screen-select'),
+  create:document.getElementById('screen-create'),
+  result:document.getElementById('screen-result')
+};
+function showScreen(name){
+  for(const k in screens) screens[k].classList.add('hidden');
+  if(name && screens[name]) screens[name].classList.remove('hidden');
+}
+
+/* ================================================================
+   ВЫБОР ПЕРСОНАЖА
+================================================================ */
+function drawPreview(cv2,ch,h){
+  const g=cv2.getContext('2d');
+  g.clearRect(0,0,cv2.width,cv2.height);
+  drawCharacter(g,cv2.width/2,cv2.height-8,h,1,ch,{pose:'idle',phase:0});
+}
+
+function buildGrids(){
+  [['1',CTRL1],['2',CTRL2]].forEach(([p])=>{
+    const grid=document.getElementById('grid'+p);
+    grid.innerHTML='';
+    ROSTER.forEach(ch=>{
+      const card=document.createElement('div');
+      card.className='card';
+      if(sel['p'+p] && sel['p'+p].id===ch.id) card.classList.add('selected');
+
+      const c=document.createElement('canvas');
+      c.width=90; c.height=120;
+      drawPreview(c,ch,100);
+      card.appendChild(c);
+
+      const nm=document.createElement('div');
+      nm.className='card-name';
+      nm.textContent=ch.name;
+      card.appendChild(nm);
+
+      card.onclick=()=>{ initAudio(); pick(p,ch); };
+      grid.appendChild(card);
+    });
+  });
+  updatePicked();
+}
+
+function pick(p,ch){
+  sel['p'+p]=ch;
+  beep(520,.07,'square',.05,120);
+  buildGrids();
+}
+
+function updatePicked(){
+  const e1=document.getElementById('picked1');
+  const e2=document.getElementById('picked2');
+  e1.textContent = sel.p1 ? sel.p1.name+' — '+sel.p1.tag : '—';
+  e2.textContent = sel.p2 ? sel.p2.name+' — '+sel.p2.tag : '—';
+  document.getElementById('btn-start').disabled = !(sel.p1 && sel.p2);
+}
+
+/* ================================================================
+   СОЗДАНИЕ ПЕРСОНАЖА
+================================================================ */
+const inpName=document.getElementById('inp-name');
+const inpColor=document.getElementById('inp-color');
+const inpAccent=document.getElementById('inp-accent');
+const inpSkin=document.getElementById('inp-skin');
+const previewCv=document.getElementById('preview');
+
+function currentCustom(){
+  return {
+    id:'custom_'+(customCount),
+    name:(inpName.value.trim()||'БОЕЦ').toUpperCase().slice(0,14),
+    tag:'КАСТОМНЫЙ БОЕЦ',
+    color:inpColor.value,
+    accent:inpAccent.value,
+    skin:inpSkin.value,
+    speed:1.05,
+    power:1.0
+  };
+}
+function refreshPreview(){
+  const g=previewCv.getContext('2d');
+  g.clearRect(0,0,previewCv.width,previewCv.height);
+  drawCharacter(g,previewCv.width/2,previewCv.height-12,200,1,currentCustom(),{pose:'idle',phase:0});
+}
+[inpName,inpColor,inpAccent,inpSkin].forEach(el=>{
+  el.addEventListener('input',refreshPreview);
+});
+
+/* ================================================================
+   ФИЗИКА БОЙЦА
+================================================================ */
+function startAttack(f,type){
+  f.attack={type,timer:0,didHit:false};
+  beep(type==='kick'?220:340,.05,'square',.03,-80);
+}
+
+function checkHit(att,def,a){
+  const dir=att.facing;
+  const x1=att.x+dir*18;
+  const x2=att.x+dir*a.range;
+  const ax1=Math.min(x1,x2), ax2=Math.max(x1,x2);
+  const dx1=def.x-30, dx2=def.x+30;
+  const dy1=def.y-def.h, dy2=def.y;
+  const ay1=att.y-att.h*0.95, ay2=att.y-att.h*0.12;
+  return ax1<dx2 && ax2>dx1 && ay1<dy2 && ay2>dy1;
+}
+
+function spawnHitParticles(x,y,dir,customColor){
+  const colors=customColor?[customColor,'#ffffff']:['#ffdd55','#ff8822','#ffffff','#ff3322'];
+  for(let i=0;i<16;i++){
+    particles.push({
+      x,y,
+      vx:dir*rnd(80,460)+rnd(-90,90),
+      vy:rnd(-360,140),
+      life:rnd(.25,.65), maxLife:.65,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      size:rnd(2,6)
+    });
+  }
+}
+
+function applyHit(att,def,a){
+  const dmg=a.damage*(att.char.power||1);
+  const hitX=(att.x+def.x)/2;
+  const hitY=def.y-def.h*0.6;
+  const pushDir=Math.sign(def.x-att.x)||att.facing;
+
+  if(def.blocking){
+    def.hp=Math.max(0,def.hp-dmg*0.18);
+    def.vx=pushDir*a.knockback*0.3;
+    def.hitstun=Math.max(def.hitstun,.1);
+    spawnHitParticles(hitX,hitY,pushDir,'#66ccff');
+    beep(300,.09,'square',.05,-120);
+    game.shake=Math.max(game.shake,4);
+  }else{
+    def.hp=Math.max(0,def.hp-dmg);
+    def.hitstun=a.hitstun;
+    def.vx=pushDir*a.knockback;
+    def.attack=null;
+    def.flash=.13;
+    spawnHitParticles(hitX,hitY,pushDir);
+    game.shake=Math.max(game.shake,a.damage>10?13:7);
+    beep(a.damage>10?95:165,.13,'sawtooth',.07,-55);
+  }
+}
+
+function updateFighter(f,other,dt,input){
+  if(f.flash>0) f.flash-=dt;
+  if(f.hpGhost>f.hp) f.hpGhost=Math.max(f.hp,f.hpGhost-dt*70);
+  else f.hpGhost=f.hp;
+
+  if(f.ko){
+    f.vx*=Math.pow(0.001,dt);
+    f.x+=f.vx*dt;
+    f.vy+=GRAVITY*dt;
+    f.y+=f.vy*dt;
+    if(f.y>GROUND){f.y=GROUND;f.vy=0;}
+    f.x=clamp(f.x,46,W-46);
+    return;
+  }
+
+  if(f.hitstun>0) f.hitstun-=dt;
+
+  const canAct = f.hitstun<=0 && !f.attack;
+
+  if(canAct && f.onGround) f.facing = other.x>=f.x ? 1 : -1;
+
+  f.blocking = canAct && f.onGround && input.down;
+
+  // движение
+  if(canAct && !f.blocking){
+    let mv=0;
+    if(input.left)  mv-=1;
+    if(input.right) mv+=1;
+    const spd=SPEED*(f.char.speed||1);
+    if(f.onGround){
+      f.vx=mv*spd;
+      if(input.up){
+        f.vy=JUMP_V; f.onGround=false;
+        f.vx=mv*spd*1.15;
+        beep(420,.09,'sine',.04,180);
+      }
+    }else{
+      f.vx+=mv*1300*dt;
+      f.vx=clamp(f.vx,-spd*1.35,spd*1.35);
+    }
+  }else if(f.onGround){
+    f.vx*=Math.pow(0.0008,dt);
+  }
+
+  // атаки
+  if(canAct && f.onGround && !f.blocking){
+    if(input.punch) startAttack(f,'punch');
+    else if(input.kick) startAttack(f,'kick');
+  }
+
+  // прогресс атаки
+  if(f.attack){
+    const a=f.attack, def=ATTACKS[a.type];
+    a.timer+=dt;
+    if(!a.didHit && a.timer>=def.startup && a.timer<=def.startup+def.active){
+      if(checkHit(f,other,def)){ a.didHit=true; applyHit(f,other,def); }
+    }
+    if(a.timer>=def.startup+def.active+def.recovery) f.attack=null;
+  }
+
+  // физика
+  if(!f.onGround) f.vy+=GRAVITY*dt;
+  f.x+=f.vx*dt;
+  f.y+=f.vy*dt;
+
+  if(f.y>=GROUND){ f.y=GROUND; f.vy=0; f.onGround=true; }
+
+  if(f.hitstun>0) f.vx*=Math.pow(0.05,dt);
+
+  f.x=clamp(f.x,46,W-46);
+
+  // анимация
+  if(f.onGround && Math.abs(f.vx)>25 && !f.attack && !f.blocking) f.walkPhase+=dt*14;
+  else f.walkPhase+=dt*3;
+}
+
+function resolveOverlap(a,b){
+  const minDist=58;
+  const d=b.x-a.x;
+  const ad=Math.abs(d);
+  if(ad<minDist){
+    const push=(minDist-ad)/2*(d>=0?1:-1);
+    a.x-=push; b.x+=push;
+    a.x=clamp(a.x,46,W-46);
+    b.x=clamp(b.x,46,W-46);
+  }
+}
+
+/* ================================================================
+   РАУНДЫ
+================================================================ */
+function startRound(){
+  game.state='fight';
+  game.timer=99;
+  game.freeze=1.7;
+  game.message='РАУНД '+game.round;
+  game.messageSub='';
+  game.messageTime=1.7;
+  p1.reset(300,1);
+  p2.reset(700,-1);
+  particles.length=0;
+}
+
+function endRound(){
+  if(game.state!=='fight') return;
+  game.state='roundEnd';
+  game.endTimer=2.9;
+  const loser = p1.hp<=0 ? p1 : p2;
+  const winner= loser===p1 ? p2 : p1;
+  loser.ko=true; loser.hp=0;
+  winner.wins++;
+  game.message='K.O.';
+  game.messageSub=winner.char.name+' ПОБЕЖДАЕТ';
+  game.messageTime=2.9;
+  game.shake=22;
+  beep(110,.5,'sawtooth',.11,-70);
+  setTimeout(()=>beep(70,.6,'sawtooth',.09,-40),120);
+}
+
+function timeUp(){
+  if(game.state!=='fight') return;
+  game.state='roundEnd';
+  game.endTimer=2.9;
+  let winner;
+  if(p1.hp===p2.hp) winner=p1; // ничья — раунд уходит первому (упрощение)
+  else winner = p1.hp>p2.hp ? p1 : p2;
+  winner.wins++;
+  game.message='ВРЕМЯ';
+  game.messageSub=winner.char.name+' ПОБЕЖДАЕТ';
+  game.messageTime=2.9;
+  beep(200,.5,'square',.08,-120);
+}
+
+function nextRound(){
+  if(p1.wins>=2 || p2.wins>=2){
+    game.state='matchEnd';
+    const winner = p1.wins>=2 ? p1 : p2;
+    document.getElementById('win-name').textContent=winner.char.name;
+    showScreen('result');
+    game.message='';
+    game.messageTime=0;
+    beep(660,.15,'square',.08,220);
+    setTimeout(()=>beep(880,.35,'square',.08,180),160);
+    return;
+  }
+  game.round++;
+  startRound();
+}
+
+/* ================================================================
+   ГЛАВНЫЙ ЦИКЛ
+================================================================ */
+function update(dt){
+  if(game.shake>0) game.shake=Math.max(0,game.shake-dt*45);
+  if(game.messageTime>0) game.messageTime-=dt;
+
+  // частицы
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.life-=dt;
+    if(p.life<=0){ particles.splice(i,1); continue; }
+    p.vy+=1500*dt;
+    p.x+=p.vx*dt;
+    p.y+=p.vy*dt;
+  }
+
+  if(game.state==='roundEnd'){
+    game.endTimer-=dt;
+    updateFighter(p1,p2,dt,NOINPUT);
+    updateFighter(p2,p1,dt,NOINPUT);
+    if(game.endTimer<=0) nextRound();
+    return;
+  }
+
+  if(game.state!=='fight') return;
+
+  if(game.freeze>0){
+    const before=game.freeze;
+    game.freeze-=dt;
+    if(before>0 && game.freeze<=0){
+      game.message='БОЙ!';
+      game.messageSub='';
+      game.messageTime=.8;
+      beep(700,.18,'square',.08,300);
+    }
+    updateFighter(p1,p2,dt,NOINPUT);
+    updateFighter(p2,p1,dt,NOINPUT);
+    return;
+  }
+
+  game.timer-=dt;
+  if(game.timer<=0){ game.timer=0; timeUp(); return; }
+
+  updateFighter(p1,p2,dt,readInput(CTRL1));
+  updateFighter(p2,p1,dt,readInput(CTRL2));
+  resolveOverlap(p1,p2);
+
+  if(p1.hp<=0 || p2.hp<=0) endRound();
+}
+
+/* ================================================================
+   РЕНДЕР
+================================================================ */
+function drawBackground(){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#080812');
+  g.addColorStop(.45,'#170b1c');
+  g.addColorStop(1,'#2a0d08');
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,W,H);
+
+  // свет
+  const rg=ctx.createRadialGradient(W/2,90,20,W/2,90,430);
+  rg.addColorStop(0,'rgba(255,90,20,.22)');
+  rg.addColorStop(1,'rgba(255,90,20,0)');
+  ctx.fillStyle=rg;
+  ctx.fillRect(0,0,W,420);
+
+  // колонны
+  ctx.fillStyle='rgba(30,22,38,.85)';
+  for(let i=0;i<6;i++){
+    const cx=70+i*175;
+    ctx.fillRect(cx,120,34,GROUND-120);
+    ctx.fillStyle='rgba(50,36,60,.9)';
+    ctx.fillRect(cx-7,110,48,16);
+    ctx.fillStyle='rgba(30,22,38,.85)';
+  }
+
+  // факелы
+  for(let i=0;i<3;i++){
+    const fx=200+i*300;
+    const flick=0.75+Math.sin(Date.now()/120+i)*0.25;
+    const fg=ctx.createRadialGradient(fx,150,2,fx,150,50*flick);
+    fg.addColorStop(0,'rgba(255,180,60,.9)');
+    fg.addColorStop(.4,'rgba(255,90,10,.5)');
+    fg.addColorStop(1,'rgba(255,60,0,0)');
+    ctx.fillStyle=fg;
+    ctx.beginPath(); ctx.arc(fx,150,52*flick,0,Math.PI*2); ctx.fill();
+  }
+
+  // пол
+  const fg=ctx.createLinearGradient(0,GROUND,0,H);
+  fg.addColorStop(0,'#241826');
+  fg.addColorStop(1,'#0a060c');
+  ctx.fillStyle=fg;
+  ctx.fillRect(0,GROUND,W,H-GROUND);
+
+  ctx.strokeStyle='rgba(255,120,40,.5)';
+  ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(0,GROUND); ctx.lineTo(W,GROUND); ctx.stroke();
+
+  // сетка пола
+  ctx.strokeStyle='rgba(255,120,40,.09)';
+  ctx.lineWidth=1;
+  for(let i=0;i<=20;i++){
+    const t=i/20;
+    ctx.beginPath();
+    ctx.moveTo(t*W,GROUND);
+    ctx.lineTo(W/2+(t-.5)*W*2.2,H);
+    ctx.stroke();
+  }
+}
+
+function renderFighter(f){
+  let pose='idle', ext=0;
+
+  if(f.ko) pose='ko';
+  else if(f.attack){
+    const a=f.attack, def=ATTACKS[a.type];
+    pose=def.pose;
+    if(a.timer<def.startup) ext=(a.timer/def.startup)*0.55;
+    else if(a.timer<def.startup+def.active) ext=1;
+    else ext=Math.max(0,1-(a.timer-def.startup-def.active)/def.recovery);
+  }
+  else if(f.hitstun>0) pose='hit';
+  else if(!f.onGround) pose='jump';
+  else if(f.blocking) pose='block';
+  else if(Math.abs(f.vx)>25) pose='walk';
+
+  drawCharacter(ctx,f.x,f.y,f.h,f.facing,f.char,{
+    pose, phase:f.walkPhase, ext, flash:f.flash
+  });
+}
+
+function drawHealthBar(x,y,w,h,f,flip){
+  ctx.save();
+
+  ctx.fillStyle='rgba(0,0,0,.7)';
+  ctx.fillRect(x-3,y-3,w+6,h+6);
+  ctx.strokeStyle='#6a6a80'; ctx.lineWidth=2;
+  ctx.strokeRect(x-3,y-3,w+6,h+6);
+
+  const ghost=clamp(f.hpGhost/f.maxHp,0,1);
+  const ratio=clamp(f.hp/f.maxHp,0,1);
+
+  // "призрак" урона
+  ctx.fillStyle='#ff3b2f';
+  const gw=w*ghost;
+  if(flip) ctx.fillRect(x+w-gw,y,gw,h); else ctx.fillRect(x,y,gw,h);
+
+  // hp
+  const grad=ctx.createLinearGradient(x,y,x,y+h);
+  grad.addColorStop(0,'#8dff62');
+  grad.addColorStop(.45,'#37c41c');
+  grad.addColorStop(1,'#14660a');
+  ctx.fillStyle=grad;
+  const hw=w*ratio;
+  if(flip) ctx.fillRect(x+w-hw,y,hw,h); else ctx.fillRect(x,y,hw,h);
+
+  // блик
+  ctx.fillStyle='rgba(255,255,255,.18)';
+  if(flip) ctx.fillRect(x+w-hw,y,hw,h*0.35); else ctx.fillRect(x,y,hw,h*0.35);
+
+  // имя
+  ctx.font='bold 19px Impact, sans-serif';
+  ctx.textAlign=flip?'right':'left';
+  ctx.fillStyle='#ffcc33';
+  ctx.fillText(f.char.name,x+(flip?w:0),y+h+22);
+
+  // пипсы побед
+  for(let i=0;i<2;i++){
+    const px=flip ? x+w-16-i*24 : x+i*24;
+    ctx.beginPath();
+    ctx.arc(px+8,y+h+34,8,0,Math.PI*2);
+    ctx.fillStyle = i<f.wins ? '#ffcc00' : 'rgba(255,255,255,.12)';
+    ctx.fill();
+    ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawHUD(){
+  const barW=380, barH=26, y=28;
+  drawHealthBar(50,y,barW,barH,p1,false);
+  drawHealthBar(W-50-barW,y,barW,barH,p2,true);
+
+  // таймер
+  ctx.save();
+  ctx.textAlign='center';
+  ctx.font='bold 46px Impact, sans-serif';
+  ctx.lineWidth=6; ctx.strokeStyle='#000';
+  ctx.strokeText(Math.ceil(game.timer),W/2,72);
+  ctx.fillStyle= game.timer<11 ? '#ff3b2f' : '#ffcc33';
+  ctx.fillText(Math.ceil(game.timer),W/2,72);
+  ctx.font='bold 14px Impact, sans-serif';
+  ctx.fillStyle='#8a8a9a';
+  ctx.fillText('РАУНД '+game.round,W/2,92);
+  ctx.restore();
+}
+
+function drawMessage(){
+  if(game.messageTime<=0 || !game.message) return;
+  const a=clamp(game.messageTime*3,0,1);
+  ctx.save();
+  ctx.globalAlpha=a;
+  ctx.textAlign='center';
+  ctx.font='bold 78px Impact, sans-serif';
+  ctx.lineWidth=10; ctx.strokeStyle='#000';
+  ctx.strokeText(game.message,W/2,230);
+  const g=ctx.createLinearGradient(0,170,0,240);
+  g.addColorStop(0,'#fff3a0'); g.addColorStop(.5,'#ffb020'); g.addColorStop(1,'#d04000');
+  ctx.fillStyle=g;
+  ctx.fillText(game.message,W/2,230);
+
+  if(game.messageSub){
+    ctx.font='bold 28px Impact, sans-serif';
+    ctx.lineWidth=7; ctx.strokeStyle='#000';
+    ctx.strokeText(game.messageSub,W/2,278);
+    ctx.fillStyle='#fff';
+    ctx.fillText(game.messageSub,W/2,278);
+  }
+  ctx.restore();
+}
+
+function drawParticles(){
+  for(const p of particles){
+    const a=clamp(p.life/p.maxLife,0,1);
+    ctx.globalAlpha=a;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size*a+1,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+function render(){
+  ctx.save();
+
+  if(game.shake>0){
+    ctx.translate(rnd(-game.shake,game.shake)*0.5, rnd(-game.shake,game.shake)*0.5);
+  }
+
+  drawBackground();
+
+  if(p1 && p2 && (game.state==='fight'||game.state==='roundEnd'||game.state==='matchEnd')){
+    // рисуем того, кто дальше — сзади
+    const order = p1.y>=p2.y ? [p1,p2] : [p2,p1];
+    order.forEach(renderFighter);
+    drawParticles();
+    drawHUD();
+    drawMessage();
+  }else{
+    drawParticles();
+  }
+
+  ctx.restore();
+
+  // виньетка
+  const vg=ctx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,H*0.95);
+  vg.addColorStop(0,'rgba(0,0,0,0)');
+  vg.addColorStop(1,'rgba(0,0,0,.75)');
+  ctx.fillStyle=vg;
+  ctx.fillRect(0,0,W,H);
+}
+
+/* ================================================================
+   ЦИКЛ
+================================================================ */
+let lastT=performance.now();
+function loop(now){
+  let dt=(now-lastT)/1000;
+  lastT=now;
+  dt=Math.min(dt,0.05);
+
+  update(dt);
+  render();
+
+  for(const k in pressed) delete pressed[k];
+
+  requestAnimationFrame(loop);
+}
+
+/* ================================================================
+   УПРАВЛЕНИЕ ЭКРАНАМИ
+================================================================ */
+function startMatch(){
+  p1=new Fighter(sel.p1,300,1);
+  p2=new Fighter(sel.p2,700,-1);
+  game.round=1;
+  game.state='fight';
+  showScreen(null);
+  startRound();
+  beep(520,.12,'square',.08,180);
+  setTimeout(()=>beep(760,.2,'square',.08,200),140);
+}
+
+function backToMenu(){
+  if(game.state==='menu') return;
+  game.state='menu';
+  game.message='';
+  game.messageTime=0;
+  particles.length=0;
+  p1=null;p2=null;
+  showScreen('menu');
+}
+
+document.getElementById('btn-play').onclick=()=>{
+  initAudio();
+  sel.p1=null; sel.p2=null;
+  buildGrids();
+  showScreen('select');
+};
+
+document.getElementById('btn-back').onclick=()=>{
+  showScreen('menu');
+};
+
+document.getElementById('btn-start').onclick=()=>{
+  if(!sel.p1||!sel.p2) return;
+  startMatch();
+};
+
+document.getElementById('btn-create').onclick=()=>{
+  refreshPreview();
+  showScreen('create');
+};
+
+document.getElementById('btn-cancel').onclick=()=>{
+  showScreen('select');
+};
+
+document.getElementById('btn-add').onclick=()=>{
+  const ch=currentCustom();
+  ch.id='custom_'+(customCount++);
+  ROSTER.push(ch);
+  beep(620,.1,'square',.07,200);
+  buildGrids();
+  showScreen('select');
+};
+
+document.getElementById('btn-rematch').onclick=()=>{
+  showScreen(null);
+  startMatch();
+};
+
+document.getElementById('btn-tomenu').onclick=()=>{
+  backToMenu();
+};
+
+/* ================================================================
+   МАСШТАБ ПОД ЭКРАН
+================================================================ */
+const app=document.getElementById('app');
+function fit(){
+  const s=Math.min(window.innerWidth/1030, window.innerHeight/590, 1);
+  app.style.transform=`scale(${s})`;
+}
+window.addEventListener('resize',fit);
+fit();
+
+/* ================================================================
+   СТАРТ
+================================================================ */
+buildGrids();
+requestAnimationFrame(loop);
+</script>
+
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+<script>
+(() => {
+  const onlineScreen = document.getElementById("screen-online");
+  const onlineStatus = document.getElementById("online-status");
+  const onlineCode = document.getElementById("online-code");
+  const serverInput = document.getElementById("online-server");
+  const roomInput = document.getElementById("online-room-code");
+  const net = {
+    socket: null, role: null, room: null, connected: false, started: false,
+    remote: {left:false,right:false,up:false,down:false,punch:false,kick:false},
+    sendAccumulator: 0, lastError: ""
+  };
+
+  // URL можно заранее задать до загрузки игры:
+  // window.MK_SERVER_URL = "https://your-service.onrender.com";
+  if (window.MK_SERVER_URL) serverInput.value = window.MK_SERVER_URL;
+
+  const oldShowScreen = showScreen;
+  showScreen = function(name) {
+    onlineScreen.classList.add("hidden");
+    oldShowScreen(name);
+  };
+
+  document.getElementById("btn-online").onclick = () => {
+    oldShowScreen(null);
+    onlineScreen.classList.remove("hidden");
+    onlineStatus.textContent = "Укажи URL сервера и выбери действие.";
+  };
+  document.getElementById("online-back").onclick = () => {
+    onlineScreen.classList.add("hidden");
+    oldShowScreen("menu");
+  };
+
+  function status(text) { onlineStatus.textContent = text; }
+  function getServerUrl() {
+    const value = serverInput.value.trim().replace(/\/$/, "");
+    if (!value) throw new Error("Введи URL сервера мультиплеера.");
+    let url;
+    try { url = new URL(value); } catch { throw new Error("Некорректный URL сервера."); }
+    if (!["http:", "https:"].includes(url.protocol)) throw new Error("URL должен начинаться с http:// или https://.");
+    return value;
+  }
+  function connect() {
+    const url = getServerUrl();
+    if (net.socket && net.socket.connected && net.socket.io.uri === url) return Promise.resolve(net.socket);
+    if (net.socket) { net.socket.removeAllListeners(); net.socket.disconnect(); }
+    net.socket = io(url, { transports: ["websocket", "polling"], timeout: 10000, reconnection: true });
+    status("Подключение к серверу…");
+    return new Promise((resolve, reject) => {
+      const s = net.socket;
+      const timeout = setTimeout(() => reject(new Error("Сервер не ответил. Проверь URL и доступность сервера.")), 11000);
+      s.once("connect", () => { clearTimeout(timeout); net.connected = true; resolve(s); });
+      s.once("connect_error", err => {
+        clearTimeout(timeout);
+        reject(new Error("Не удалось подключиться: " + (err.message || "ошибка соединения")));
+      });
+      s.on("disconnect", () => {
+        net.connected = false;
+        if (net.role) status("Соединение потеряно. Вернись в меню и подключись заново.");
+      });
+      s.on("room:peer-joined", () => {
+        status("Игрок подключился. Выбери своего бойца.");
+        if (net.role === "host") buildGrids();
+      });
+      // Гость запрашивает текущий выбор хоста, в том числе если хост выбрал бойца заранее.
+      s.on("player:request-character", () => {
+        if (net.role === "host" && sel.p1 && net.socket && net.socket.connected) {
+          net.socket.emit("player:character", {character: sel.p1});
+        }
+      });
+      s.on("room:peer-left", data => {
+        net.started = false;
+        status((data && data.message) || "Второй игрок отключился.");
+      });
+      s.on("player:character", data => {
+        if (!data || !data.character || !["host","guest"].includes(data.role)) return;
+        const key = data.role === "host" ? "p1" : "p2";
+        const ch = data.character;
+        const existing = ROSTER.find(c => c.id === ch.id);
+        if (!existing) ROSTER.push(ch);
+        sel[key] = ROSTER.find(c => c.id === ch.id) || ch;
+        buildGrids();
+        status(data.role === "host" ? "Хост выбрал бойца." : "Гость выбрал бойца.");
+      });
+      s.on("player:input", data => {
+        if (!data || !data.input) return;
+        if (data.role === net.role) return;
+        net.remote.left = !!data.input.left;
+        net.remote.right = !!data.input.right;
+        net.remote.up = !!data.input.up;
+        net.remote.down = !!data.input.down;
+        // Пакеты движения не должны затирать отдельный импульс удара.
+        if (data.input.punch) net.remote.punch = true;
+        if (data.input.kick) net.remote.kick = true;
+      });
+      const beginReceivedMatch = () => {
+        if (net.started) return;
+        if (!sel.p1 || !sel.p2) { status("Не получен выбор обоих бойцов. Подключитесь заново."); return; }
+        net.started = true;
+        onlineScreen.classList.add("hidden");
+        startMatch();
+        status("Бой начался!");
+      };
+      s.on("room:start", beginReceivedMatch);
+      s.on("room:rematch", () => {
+        net.started = false;
+        beginReceivedMatch();
+      });
+    });
+  }
+
+  function enterSelection(role, code) {
+    net.role = role;
+    net.room = code;
+    net.started = false;
+    net.remote = {left:false,right:false,up:false,down:false,punch:false,kick:false};
+    sel.p1 = null; sel.p2 = null;
+    onlineCode.textContent = code;
+    oldShowScreen("select");
+    buildGrids();
+    status(role === "host"
+      ? "Комната создана. Отправь код другу и дождись подключения."
+      : "Подключено. Ты играешь за правого бойца.");
+    document.getElementById("btn-start").textContent = role === "host" ? "НАЧАТЬ БОЙ" : "ОЖИДАНИЕ ХОСТА";
+    if (role === "guest" && net.socket && net.socket.connected) {
+      net.socket.emit("player:request-character");
+    }
+  }
+
+  document.getElementById("online-create").onclick = async () => {
+    try {
+      const s = await connect();
+      s.emit("room:create", {}, result => {
+        if (!result || !result.ok) return status((result && result.error) || "Не удалось создать комнату.");
+        enterSelection("host", result.code);
+      });
+    } catch (e) { status(e.message); }
+  };
+
+  document.getElementById("online-join").onclick = async () => {
+    try {
+      const s = await connect();
+      const code = roomInput.value.trim().toUpperCase();
+      if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) throw new Error("Код должен содержать 6 символов.");
+      s.emit("room:join", {code}, result => {
+        if (!result || !result.ok) return status((result && result.error) || "Не удалось войти в комнату.");
+        enterSelection("guest", result.code);
+      });
+    } catch (e) { status(e.message); }
+  };
+
+  // В сетевой игре каждый выбирает только своего бойца.
+  const originalPick = pick;
+  pick = function(p, ch) {
+    if (!net.role) return originalPick(p, ch);
+    if ((net.role === "host" && p !== "1") || (net.role === "guest" && p !== "2")) {
+      status(net.role === "host" ? "Хост выбирает левого бойца." : "Ты выбираешь правого бойца.");
+      return;
+    }
+    sel["p" + p] = ch;
+    beep(520,.07,"square",.05,120);
+    buildGrids();
+    net.socket.emit("player:character", {character: ch});
+    status("Боец выбран. " + (net.role === "host" ? "Дождись выбора гостя." : "Ожидай запуска от хоста."));
+  };
+
+  const originalBuildGrids = buildGrids;
+  buildGrids = function() {
+    originalBuildGrids();
+    if (!net.role) return;
+    for (const p of ["1","2"]) {
+      const allowed = (net.role === "host" && p === "1") || (net.role === "guest" && p === "2");
+      const grid = document.getElementById("grid" + p);
+      grid.style.opacity = allowed ? "1" : ".55";
+      grid.style.pointerEvents = allowed ? "auto" : "none";
+    }
+    document.getElementById("btn-create").disabled = false;
+    document.getElementById("btn-start").disabled =
+      net.role !== "host" || !sel.p1 || !sel.p2 || !net.socket || !net.socket.connected;
+    document.getElementById("btn-start").textContent = net.role === "guest" ? "ОЖИДАНИЕ ХОСТА" : "НАЧАТЬ БОЙ";
+  };
+
+  document.getElementById("btn-start").onclick = () => {
+    if (net.role) {
+      if (net.role !== "host" || !sel.p1 || !sel.p2 || !net.socket || !net.socket.connected) return;
+      net.socket.emit("room:start");
+      return; // startMatch вызовется после подтверждения сервером
+    }
+    if (!sel.p1 || !sel.p2) return;
+    startMatch();
+  };
+
+  // Возвращаем локальный режим при выходе в меню.
+  const originalBackToMenu = backToMenu;
+  backToMenu = function() {
+    if (net.socket && net.socket.connected && net.room) net.socket.emit("room:leave");
+    net.role = null; net.room = null; net.started = false;
+    net.remote = {left:false,right:false,up:false,down:false,punch:false,kick:false};
+    document.getElementById("btn-start").textContent = "В БОЙ!";
+    document.getElementById("grid1").style.pointerEvents = "";
+    document.getElementById("grid2").style.pointerEvents = "";
+    document.getElementById("grid1").style.opacity = "";
+    document.getElementById("grid2").style.opacity = "";
+    originalBackToMenu();
+    game.state = "menu";
+    onlineScreen.classList.add("hidden");
+    oldShowScreen("menu");
+  };
+  document.getElementById("btn-tomenu").onclick = () => backToMenu();
+  document.getElementById("btn-back").onclick = () => {
+    if (net.role) { backToMenu(); return; }
+    oldShowScreen("menu");
+  };
+
+  function localInputFor(role) {
+    const c = role === "host" ? CTRL1 : CTRL2;
+    return {
+      left:!!keys[c.left], right:!!keys[c.right], up:!!keys[c.up], down:!!keys[c.down],
+      punch:!!pressed[c.punch], kick:!!pressed[c.kick]
+    };
+  }
+  const originalReadInput = readInput;
+  readInput = function(c) {
+    if (!net.role || !net.started) return originalReadInput(c);
+    const localControl = net.role === "host" ? CTRL1 : CTRL2;
+    if (c === localControl) return localInputFor(net.role);
+    const result = {...net.remote};
+    net.remote.punch = false;
+    net.remote.kick = false;
+    return result;
+  };
+
+  // Пересылаем состояния движения часто, а удары отправляем сразу при keydown,
+  // чтобы короткое нажатие не потерялось между пакетами.
+  window.addEventListener("keydown", event => {
+    if (!net.role || !net.started || !net.socket || !net.socket.connected) return;
+    const c = net.role === "host" ? CTRL1 : CTRL2;
+    if (event.code === c.punch || event.code === c.kick) {
+      const input = {left:false,right:false,up:false,down:false,punch:event.code===c.punch,kick:event.code===c.kick};
+      net.socket.emit("player:input", {input});
+    }
+  });
+  const originalLoop = loop;
+  // A lightweight separate sender; the existing game loop remains untouched.
+  setInterval(() => {
+    if (!net.role || !net.started || !net.socket || !net.socket.connected) return;
+    const c = net.role === "host" ? CTRL1 : CTRL2;
+    net.socket.emit("player:input", {input:{
+      left:!!keys[c.left], right:!!keys[c.right], up:!!keys[c.up], down:!!keys[c.down],
+      punch:false, kick:false
+    }});
+  }, 33);
+
+  // В сетевой комнате реванш запускает хост, а гость ждёт серверного события.
+  document.getElementById("btn-rematch").onclick = () => {
+    if (!net.role) {
+      showScreen(null);
+      startMatch();
+      return;
+    }
+    if (net.role === "host" && net.socket && net.socket.connected) {
+      net.socket.emit("room:rematch");
+      status("Запрашиваем реванш…");
+    } else {
+      status("Ожидаем, пока хост запустит реванш.");
+    }
+  };
+
+  // В сетевой комнате у каждого созданного бойца уникальный ID:
+  // одинаковые custom_0 у хоста и гостя не должны подменять друг друга.
+  document.getElementById("btn-add").onclick = () => {
+    const ch = currentCustom();
+    if (net.role) {
+      ch.id = "custom_" + net.role + "_" + Date.now().toString(36) +
+        "_" + Math.random().toString(36).slice(2, 7);
+    } else {
+      ch.id = "custom_" + (customCount++);
+    }
+    ROSTER.push(ch);
+    beep(620,.1,"square",.07,200);
+    buildGrids();
+    showScreen("select");
+  };
+
+  // Custom fighter creation remains available. The fighter is transmitted
+  // when selected from the player's own grid.
+})();
+</script>
+</body>
+</html>
