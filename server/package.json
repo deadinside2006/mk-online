@@ -3,11 +3,16 @@
   "name": "mortal-kombat-online-server",
   "version": "1.0.0",
   "private": true,
+  "description": "Two-player room and input relay server for the HTML fighting game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "ws": "^8.18.0"
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
   }
 }
